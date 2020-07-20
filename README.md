@@ -1,32 +1,20 @@
 # sudoku-solver
 
-FIXME: description
-
-## Installation
-
-Download from http://example.com/FIXME.
+The purpose of the project is to explore potential of the Clojure language while implementing the solution to solve Sudoku.
+The implementation is following a brute force (backtracking) algorithm. The simplicity of this algorithm and the ability to test recursive calls were the causes of selecting the algorithm.  
 
 ## Usage
 
-FIXME: explanation
+The project uses leiningen project manager. The code can either be ran from leiningen REPL or byu building the uber jar.
+The uber jar can be executed with following call. 
 
-    $ java -jar sudoku-solver-0.1.0-standalone.jar [args]
+    $ lein uberjar
 
-## Options
+The code can then be ran by going to target directory and executing
 
-FIXME: listing of options this app accepts.
-
-## Examples
-
-...
-
-### Bugs
+    $ java -jar sudoku-solver-0.1.0-standalone.jar
 
 ...
-
-### Any Other Sections
-### That You Think
-### Might be Useful
 
 ## License
 

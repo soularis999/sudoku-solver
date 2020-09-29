@@ -1,7 +1,6 @@
 (ns sudoku-solver.core
   (:gen-class))
 
-;;(def grid (map #(concat (range % 10)(range 1 %))(range 1 10)))
 (def grid '(
            (5 3 0 0 7 0 0 0 0)
            (6 0 0 1 9 5 0 0 0)
@@ -18,16 +17,15 @@
 
 ;; ********************************* utils ***************************
 
-(defn valid? [vec]
-;; validate that there are no duplicates
-;; filter out all 0s and then check if all distinct
-;; cannot just apply distinct as distinct takes varargs and not seq
-  (apply distinct? (filter pos-int? vec))
+(defn valid? [collection]
+  "validate that there are no duplicates. Filter out all 0s and then check if all distinct"
+;;cannot just apply distinct as distinct takes varargs and not seq
+  (apply distinct? (filter pos-int? collection))
 )
 
-(defn complete? [vec]
-;; check if all complete
-  (every? pos-int? vec)
+(defn complete? [collection]
+  "check if row is complete"
+  (every? pos-int? collection)
 )
 
 (defn in?
@@ -45,19 +43,24 @@
 )
 
 (defn replace-in-list
+  "replace the value in the list at specified position"
   [pos collection val]
   (concat (take pos collection) (list val) (nthnext collection (inc pos))))
 
 ;; ********************************* logic ***************************
 
 
-(defn getrow [grid rowid] 
+(defn getrow [grid rowid]
+  "Given the grid the function returns the nth row, where nth is defined by row id"
   (nth grid rowid))
 
-(defn getcol [grid colid] 
+(defn getcol [grid colid]
+  "Given the grid the function returns the nth column, where nth is defined by colid"
   (map #(nth % colid) grid))
 
 (defn getbox [grid rowid colid]
+  "Given the grid and any cell coordinate (row and col id) the method will return the data associated with the 3x3
+square that the cell belongs to. The function returns a seq back"
   ;; given the row and col of cell find the top row and col coordinates of the square
   (let [firstrow (* 3 (quot rowid 3)) firstcol (* 3 (quot colid 3)) lastrow (+ firstrow 3) lastcol (+ firstcol 3)]
     (let [rows (map #(getrow grid %) (range firstrow lastrow))]
@@ -66,8 +69,13 @@
     )
 )
 
+(defn getval [grid rowid colid] 
+  "Given the grid and cell coordinates the function will return the value of the cell"
+  (-> (getrow grid rowid) (nth colid)))
 
 (defn check-grid [grid fn]
+  "Given the grid and validation function the function will run through every row and will apply the function to it.
+If function fails the result will be false."
   (every? fn 
           (concat
            (map #(getrow grid %) row_range)
@@ -78,7 +86,7 @@
           ))
 
 (defn findrow [grid]
-  ;; given grid - find the first row with non filled cell
+  "Given grid, find the first row with non filled cell"
   (let [rowId
         (first (keep-indexed #(when-not (complete? (getrow grid %2)) %1) row_range))
         ]
@@ -88,6 +96,7 @@
 )
 
 (defn find-row-and-col
+  "Given grid, find the first the coordinates of the first cell that was not filled"
   ([grid] (find-row-and-col grid (findrow grid)))
   ([grid rowid] (first 
                  (keep-indexed #(when (zero? %2) (list rowid %1)) (getrow grid rowid)))
@@ -95,37 +104,45 @@
 )
 
 (defn generate-new-grid
+  "given th grid, cell coordinates and new value return back a new grid with new value"
   [grid row col val]
   (->> (replace-in-list col (getrow grid row) val) (replace-in-list row grid))
 )
 
-(defn run_inc [grid fn]
-  "The function is responsible for looping through every value from 1..9, validating that 
-the grid is valid and calling the run method recursively again with new grid. if run method returns null
-than this method reverts to previous grid and tries next value for that position"
-  (let [[row col] (find-row-and-col grid)]
-    (loop [val 1]
-      (let [new-grid (generate-new-grid grid row col val) temp (fn new-grid)]
-        (if (and (< val 9) (nil? temp))
-          (recur (inc val))
-            temp
+
+;; ************************** Runner code ***************************
+
+(defn run
+  [grid stats]
+
+  (println "Before",grid, stats)
+  (if-not (check-grid grid valid?) 
+    '(nil stats)
+    (if (check-grid grid complete?) 
+      '(grid stats)
+     
+      (let [[row col] (find-row-and-col grid) new_stats stats]
+        (println "After", grid, stats, new_stats)
+        (loop [val 1]
+          (let [new_grid (generate-new-grid grid row col val)
+                result (run new_grid (inc new_stats))]
+            
+            (if (and (< val 9) (nil? (first result)))
+              (recur (inc val))
+              result)
+            )
           )
         )
       )
     )
-)
+  )
       
 
 
-(defn run [grid]
-  (if (check-grid grid valid?)
-    (if (check-grid grid complete?) grid (run_inc grid run))
-    nil
-    )
-)
+
 
 (defn -main
   [& args]
   (println "Hello sudoku")
-  (println (run grid))
+  (println (run grid 0))
 )

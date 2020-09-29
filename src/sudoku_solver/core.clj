@@ -121,14 +121,14 @@ If function fails the result will be false."
     (if (check-grid grid complete?) 
       '(grid stats)
      
-      (let [[row col] (find-row-and-col grid) new_stats stats]
-        (println "After", grid, stats, new_stats)
-        (loop [val 1]
+      (let [[row col] (find-row-and-col grid)]
+        (println "After", grid, stats)
+        (loop [val 1 new_stats stats]
           (let [new_grid (generate-new-grid grid row col val)
-                result (run new_grid (inc new_stats))]
+                result (run new_grid new_stats)]
             
             (if (and (< val 9) (nil? (first result)))
-              (recur (inc val))
+              (recur (inc val) (inc new_stats))
               result)
             )
           )
